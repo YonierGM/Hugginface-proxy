@@ -40,7 +40,12 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: false
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(limiter);
 
@@ -56,13 +61,18 @@ const AVAILABLE_MODELS = {
   "hermes-3": "NousResearch/Hermes-3-Llama-3.1-8B:fireworks-ai"
 };
 
-// Middleware de logging
+// Middleware de logging mejorado
 const logRequest = (req, res, next) => {
   const start = Date.now();
   
+  // Log inmediato de la petición entrante
+  console.log(`→ ${req.method} ${req.url} from ${req.ip}`);
+  console.log(`  Headers:`, JSON.stringify(req.headers, null, 2));
+  console.log(`  Body:`, JSON.stringify(req.body, null, 2));
+  
   res.on('finish', () => {
     const duration = Date.now() - start;
-    logger.info({
+    const logData = {
       method: req.method,
       url: req.url,
       status: res.statusCode,
@@ -71,7 +81,10 @@ const logRequest = (req, res, next) => {
       userAgent: req.get('User-Agent'),
       model: req.body?.model,
       messageCount: req.body?.messages?.length
-    });
+    };
+    
+    console.log(`← Response:`, JSON.stringify(logData, null, 2));
+    logger.info('Request completed', logData);
   });
   
   next();
@@ -120,6 +133,9 @@ const createStreamResponse = (content) => {
 
 // Endpoint principal de chat
 app.post("/v1/chat/completions", async (req, res) => {
+  console.log("🚀 Chat completions endpoint hit");
+  console.log("📋 Request body:", JSON.stringify(req.body, null, 2));
+  
   try {
     const { 
       messages, 
@@ -133,6 +149,7 @@ app.post("/v1/chat/completions", async (req, res) => {
     } = req.body;
     
     if (!HF_TOKEN) {
+      console.log("❌ No HF_TOKEN found");
       logger.error("Token de Hugging Face no encontrado");
       return res.status(401).json({ 
         error: "Token de Hugging Face no encontrado",
@@ -140,7 +157,10 @@ app.post("/v1/chat/completions", async (req, res) => {
       });
     }
 
+    console.log("✅ HF_TOKEN found");
+
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      console.log("❌ Invalid messages");
       return res.status(400).json({
         error: "Mensajes requeridos",
         details: "El campo 'messages' debe ser un array no vacío"
@@ -153,6 +173,7 @@ app.post("/v1/chat/completions", async (req, res) => {
       selectedModel = AVAILABLE_MODELS[model] || model;
     }
 
+    console.log(`🤖 Using model: ${selectedModel}`);
     logger.info(`Usando modelo: ${selectedModel}`);
 
     const requestBody = {
