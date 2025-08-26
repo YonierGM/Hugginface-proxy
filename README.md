@@ -15,7 +15,7 @@ Un proxy que permite usar modelos de Hugging Face con cualquier herramienta que 
 
 ```bash
 # Clonar el repositorio
-git clone <tu-repo>
+git clone https://github.com/YonierGM/Hugginface-proxy
 cd proxy-hf-openai
 
 # Instalar dependencias
@@ -50,7 +50,7 @@ npm start
 curl -X POST http://localhost:3000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "llama-3.1-8b",
+    "model": "meta-llama/Llama-3.1-8B-Instruct:fireworks-ai",
     "messages": [
       {"role": "user", "content": "Hola, ¿cómo estás?"}
     ]
@@ -110,30 +110,6 @@ curl http://localhost:3000/stats
 
 # Logs en tiempo real
 tail -f combined.log
-```
-
-## 🚀 Despliegue
-
-### Railway
-
-```bash
-railway login
-railway init
-railway add
-railway deploy
-```
-
-### Render
-
-1. Conectar repositorio
-2. Configurar variables de entorno
-3. Desplegar
-
-### Vercel
-
-```bash
-npm i -g vercel
-vercel --prod
 ```
 
 ## 🤝 Casos de uso
